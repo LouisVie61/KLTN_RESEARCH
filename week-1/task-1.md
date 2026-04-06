@@ -1,4 +1,4 @@
-# Hệ thống tự động kiểm thử an ninh cho Smart Contract bằng Symbolic Execution
+## Description: Hệ thống tự động kiểm thử an ninh cho Smart Contract bằng Symbolic Execution
 ## Basic features:
 	Upload file (Solidity code)
 
@@ -15,10 +15,11 @@
 	Role-based Access Control (RBAC)
 
 	Scanning history
+
 ## Advanced features compared to market
 	Formal Specification: cho phép người dùng viết các thuộc bằng toán học mà contract phải tuân thủ
 	
-	Symbolic Execution Engine: Thay vì chạy test case (chạy balance = 100, balance = 10, …), hệ thống dùng biến giả (symbols: ex: x, y, …) để duyệt qua mọi nhánh thực thi khả thi của code
+	"Symbolic Execution" Engine: Thay vì chạy test case (chạy balance = 100, balance = 10, …), hệ thống dùng biến giả (symbols: ex: x, y, …) để duyệt qua mọi nhánh thực thi khả thi của code
 
 	Model Checking Integration: Kiểm chứng xem trạng thái của contract có bao giờ rơi vào vùng "nguy hiểm" không; hay có thể hiểu: Duyệt toàn bộ trạng thái có thể của hệ thống để kiểm tra xem có trạng thái nào vi phạm điều kiện an toàn không.
 
