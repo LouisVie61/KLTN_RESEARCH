@@ -28,4 +28,4 @@
     Gas Optimization Verification: Chứng minh toán học rằng một hàm đã được tối ưu hóa về mặt lưu trữ dữ liệu; thường mọi người đo (benchmark) thì mình đi prove bằng toán học;
 
 ## Nhiệm vụ thầy giao:
-    Thực hiện research về: Symbolic Execution trên một smart contract
+    Thực hiện research về: Symbolic Execution
