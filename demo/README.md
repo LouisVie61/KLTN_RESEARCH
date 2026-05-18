@@ -56,11 +56,14 @@ Copy-Item .env.example .env
 Sau đó cập nhật:
 
 ```env
-GEMINI_API_KEY=your_key_here
+GOOGLE_API_KEY=your_key_here
 GEMINI_MODEL=gemini-2.5-flash
+GEMINI_MIN_INTERVAL_SECONDS=13
+GEMINI_MAX_RETRIES=1
 ```
 
 `GEMINI_MODEL` mặc định là `gemini-2.5-flash` nếu không khai báo biến này.
+`GEMINI_MIN_INTERVAL_SECONDS` và `GEMINI_MAX_RETRIES` giúp demo chạy ổn định hơn khi dùng Gemini free tier.
 
 ## Cách chạy
 
@@ -82,6 +85,14 @@ Chạy bằng Gemini:
 python pipeline.py samples/vulnerable.sol --llm gemini
 ```
 
+## Chạy với Gemini thật
+
+Khi trình bày bằng API key thật, nên dùng sample nhỏ hơn để giảm số request nhưng vẫn phủ đủ 3 pattern chính:
+
+```powershell
+python pipeline.py samples/vulnerable_gemini.sol --llm gemini
+```
+
 Xuất kết quả dạng JSON:
 
 ```powershell
@@ -90,7 +101,7 @@ python pipeline.py samples/vulnerable.sol --json
 
 Các mode LLM:
 
-- `auto`: dùng Gemini nếu có `GEMINI_API_KEY`, nếu không sẽ fallback sang mock.
+- `auto`: dùng Gemini nếu có `GOOGLE_API_KEY`, nếu không sẽ fallback sang mock.
 - `mock`: dùng mock deterministic, phù hợp để demo offline và test.
 - `gemini`: ưu tiên Gemini; nếu thiếu API key hoặc SDK lỗi, pipeline fallback sang mock và in warning.
 

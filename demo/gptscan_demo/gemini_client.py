@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 from pathlib import Path
 from typing import Any
 
@@ -16,14 +17,17 @@ class GeminiLLMClient:
     def __init__(self, demo_root: Path) -> None:
         try:
             from google import genai
-        except ImportError as exc:  # pragma: no cover - optional dependency
+        except ImportError as exc:
             raise LLMClientError("Install google-genai to use Gemini.") from exc
 
-        api_key = os.getenv("GEMINI_API_KEY")
+        api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
-            raise LLMClientError("GEMINI_API_KEY is not set.")
+            raise LLMClientError("GOOGLE_API_KEY is not set.")
 
         self.model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+        self.min_interval_seconds = _env_float("GEMINI_MIN_INTERVAL_SECONDS", 13.0)
+        self.max_retries = _env_int("GEMINI_MAX_RETRIES", 1)
+        self._last_request_at = 0.0
         self.client = genai.Client(api_key=api_key)
         self.match_prompt = (demo_root / "prompts" / "scenario_match.txt").read_text(encoding="utf-8")
         self.key_prompt = (demo_root / "prompts" / "key_location.txt").read_text(encoding="utf-8")
@@ -122,19 +126,38 @@ class GeminiLLMClient:
         )
 
     def _generate_json(self, prompt: str) -> dict[str, Any]:
-        try:
-            response = self.client.models.generate_content(
-                model=self.model,
-                contents=prompt,
-            )
-        except Exception as exc:  # pragma: no cover - network/API dependent
-            raise LLMClientError(f"Gemini request failed: {exc}") from exc
+        response = None
+        for attempt in range(self.max_retries + 1):
+            self._wait_for_request_slot()
+            try:
+                response = self.client.models.generate_content(
+                    model=self.model,
+                    contents=prompt,
+                )
+                self._last_request_at = time.monotonic()
+                break
+            except Exception as exc:
+                self._last_request_at = time.monotonic()
+                if attempt >= self.max_retries or not _looks_rate_limited(exc):
+                    raise LLMClientError(f"Gemini request failed: {exc}") from exc
+                time.sleep(_retry_delay_seconds(exc, self.min_interval_seconds))
+
+        if response is None:
+            raise LLMClientError("Gemini request failed without a response.")
 
         text = getattr(response, "text", "") or ""
         try:
             return json.loads(_strip_json_fence(text))
         except json.JSONDecodeError as exc:
             raise LLMClientError(f"Gemini returned non-JSON response: {text[:200]}") from exc
+
+    def _wait_for_request_slot(self) -> None:
+        if self.min_interval_seconds <= 0 or self._last_request_at <= 0:
+            return
+        elapsed = time.monotonic() - self._last_request_at
+        remaining = self.min_interval_seconds - elapsed
+        if remaining > 0:
+            time.sleep(remaining)
 
 
 def _strip_json_fence(text: str) -> str:
@@ -153,3 +176,48 @@ def _optional_int(value: Any) -> int | None:
     except (TypeError, ValueError):
         return None
 
+
+def _env_float(name: str, default: float) -> float:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    try:
+        return max(0.0, float(value))
+    except ValueError:
+        return default
+
+
+def _env_int(name: str, default: int) -> int:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    try:
+        return max(0, int(value))
+    except ValueError:
+        return default
+
+
+def _looks_rate_limited(exc: Exception) -> bool:
+    text = str(exc).lower()
+    return any(
+        token in text
+        for token in (
+            "429",
+            "quota",
+            "rate limit",
+            "rate-limit",
+            "resource_exhausted",
+        )
+    )
+
+
+def _retry_delay_seconds(exc: Exception, fallback: float) -> float:
+    text = str(exc)
+    matches = [
+        re.search(r"retryDelay['\"]?\s*:\s*['\"]?(\d+(?:\.\d+)?)s", text, re.IGNORECASE),
+        re.search(r"retry in\s+(\d+(?:\.\d+)?)s", text, re.IGNORECASE),
+    ]
+    for match in matches:
+        if match:
+            return max(fallback, float(match.group(1)))
+    return fallback

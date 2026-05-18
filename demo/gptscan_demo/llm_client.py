@@ -39,13 +39,13 @@ def build_llm_client(mode: str, demo_root: Path, warnings: list[str]) -> LLMClie
     if mode == "mock":
         return MockLLMClient()
 
-    if mode == "auto" and not os.getenv("GEMINI_API_KEY"):
-        warnings.append("GEMINI_API_KEY is not set; using mock LLM.")
+    if mode == "auto" and not os.getenv("GOOGLE_API_KEY"):
+        warnings.append("GOOGLE_API_KEY is not set; using mock LLM.")
         return MockLLMClient()
 
     if mode in {"auto", "gemini"}:
-        if not os.getenv("GEMINI_API_KEY"):
-            warnings.append("GEMINI_API_KEY is not set; falling back to mock LLM.")
+        if not os.getenv("GOOGLE_API_KEY"):
+            warnings.append("GOOGLE_API_KEY is not set; falling back to mock LLM.")
             return MockLLMClient()
         try:
             from .gemini_client import GeminiLLMClient

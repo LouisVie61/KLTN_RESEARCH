@@ -15,7 +15,7 @@ from gptscan_demo.scenarios import load_scenarios
 
 
 DEMO_ROOT = Path(__file__).resolve().parent
-DEFAULT_SAMPLE = DEMO_ROOT / "samples" / "vulnerable.sol"
+DEFAULT_SAMPLE = DEMO_ROOT / "samples" / "vulnerable_gemini.sol"
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -76,13 +76,13 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         "input_file",
         nargs="?",
         default=str(DEFAULT_SAMPLE),
-        help="Solidity file to scan. Defaults to demo/samples/vulnerable.sol.",
+        help="Solidity file to scan. Defaults to demo/samples/vulnerable_gemini.sol.",
     )
     parser.add_argument(
         "--llm",
         choices=("auto", "mock", "gemini"),
         default="auto",
-        help="LLM backend. auto uses Gemini when GEMINI_API_KEY is set, otherwise mock.",
+        help="LLM backend. auto uses Gemini when GOOGLE_API_KEY is set, otherwise mock.",
     )
     parser.add_argument(
         "--json",
