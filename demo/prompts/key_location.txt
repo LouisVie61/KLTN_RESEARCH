@@ -1,0 +1,32 @@
+You are simulating the GPT key-variable and key-statement recognition stage of a GPTScan-style Solidity scanner.
+
+For the matched vulnerability, identify the variables and exact statements that should be supplied to static analysis.
+Return only valid JSON. Do not wrap the response in Markdown.
+
+Function:
+- name: {function_name}
+- line_range: {line_start}-{line_end}
+
+Matched vulnerability:
+- vulnerability_type: {vulnerability_type}
+- scenario: {scenario}
+- property: {property}
+
+Code:
+```solidity
+{code}
+```
+
+Expected JSON schema:
+{{
+  "key_variables": ["variableName"],
+  "key_statements": [
+    {{
+      "line": 12,
+      "role": "external_call | state_update | sensitive_operation | supply_zero_branch | mint_share",
+      "code": "exact source line"
+    }}
+  ],
+  "explanation": "short reason"
+}}
+

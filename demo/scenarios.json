@@ -1,0 +1,27 @@
+[
+  {
+    "id": "reentrancy_order_issue",
+    "name": "Reentrancy / State Update Order Issue",
+    "scenario": "Function sends ETH or performs a low-level external call while handling user-controlled value.",
+    "property": "The external call happens before the relevant balance or state update, leaving a reentry window.",
+    "static_check": "Confirm an external call line appears before a later balance/state update line.",
+    "filter_keywords": [".call{", ".call(", ".send(", ".transfer(", "balances"]
+  },
+  {
+    "id": "missing_access_control",
+    "name": "Missing Access Control",
+    "scenario": "Public or external function performs a sensitive owner/admin/mint operation.",
+    "property": "The function lacks an obvious owner check such as onlyOwner or require(msg.sender == owner).",
+    "static_check": "Confirm sensitive operation exists and reject if owner check or onlyOwner is present.",
+    "filter_keywords": ["_mint(", "owner =", "onlyOwner", "msg.sender"]
+  },
+  {
+    "id": "risky_first_deposit",
+    "name": "Risky First Deposit",
+    "scenario": "Deposit or liquidity function handles the first depositor when total supply or liquidity is zero.",
+    "property": "Initial shares are set directly from the deposit amount and then minted, allowing share-price manipulation.",
+    "static_check": "Confirm a totalSupply/supply zero branch and direct amount-to-share minting logic.",
+    "filter_keywords": ["totalSupply", "shares", "_mint", "deposit"]
+  }
+]
+

@@ -1,0 +1,31 @@
+You are simulating the GPT matching stage of a GPTScan-style Solidity scanner.
+
+Match the candidate function against the provided vulnerability scenarios and properties.
+Return only valid JSON. Do not wrap the response in Markdown.
+
+Candidate function:
+- name: {function_name}
+- signature: {signature}
+- line_range: {line_start}-{line_end}
+
+Scenarios:
+{scenarios}
+
+Code:
+```solidity
+{code}
+```
+
+Expected JSON schema:
+{{
+  "matches": [
+    {{
+      "vulnerability_type": "scenario id from the input",
+      "scenario_matched": true,
+      "property_matched": true,
+      "confidence": 0.0,
+      "explanation": "short reason"
+    }}
+  ]
+}}
+
