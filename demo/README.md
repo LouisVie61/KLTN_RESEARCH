@@ -73,30 +73,13 @@ Chạy với sample mặc định `samples/vulnerable.sol`:
 python pipeline.py
 ```
 
-Chạy rõ ràng bằng mock LLM:
-
 ```powershell
 python pipeline.py samples/vulnerable.sol --llm mock
 ```
 
-Chạy bằng Gemini:
-
-```powershell
-python pipeline.py samples/vulnerable.sol --llm gemini
-```
-
-## Chạy với Gemini thật
-
-Khi trình bày bằng API key thật, nên dùng sample nhỏ hơn để giảm số request nhưng vẫn phủ đủ 3 pattern chính:
 
 ```powershell
 python pipeline.py samples/vulnerable_gemini.sol --llm gemini
-```
-
-Xuất kết quả dạng JSON:
-
-```powershell
-python pipeline.py samples/vulnerable.sol --json
 ```
 
 Các mode LLM:
@@ -112,8 +95,6 @@ Từ thư mục `demo`:
 ```powershell
 python -m pytest tests
 ```
-
-Hoặc từ thư mục gốc repo:
 
 ```powershell
 python -m pytest demo/tests
@@ -187,3 +168,8 @@ JSON output dùng `ScanResult.to_dict()` và bao gồm:
 ## Ghi chú
 
 Parser trong demo chỉ là parser heuristic để phục vụ minh họa, không thay thế Solidity compiler/parser đầy đủ. Kết quả quét nên được xem là tín hiệu hỗ trợ review, không phải kết luận bảo mật cuối cùng.
+
+
+- baseline: danh gia metric nao la chinh dua tren thuc nghiem va bo du lieu cua bai bao
+- vi sao chi duoc 57% cho large project nhu web3bugs nhu ket qua cua bai bao? reason?
+- huong nghien cuu co ai phat trien them khong? reason?
