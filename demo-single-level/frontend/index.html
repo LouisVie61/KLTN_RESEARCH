@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Single-level MetaMask local demo</title>
+  <style>
+    body{font:16px system-ui;max-width:700px;margin:40px auto;padding:0 16px} button,input{padding:8px;margin:4px 0} input{width:100%;box-sizing:border-box} section{border:1px solid #ddd;border-radius:8px;margin:14px 0;padding:14px} #status{white-space:pre-wrap;background:#f5f5f5;padding:10px}
+  </style>
+</head>
+<body>
+  <h1>Local MetaMask token demo</h1>
+  <p>Kết nối một trong hai ví Hardhat đã import vào MetaMask. Mọi giao dịch sẽ hiện popup MetaMask.</p>
+  <button id="connect">Kết nối MetaMask</button>
+  <button id="refresh">Cập nhật số dư</button>
+  <pre id="status">Chưa kết nối.</pre>
+
+  <section><h2>Chuyển DST giữa hai ví</h2><input id="recipient" placeholder="Địa chỉ ví nhận"><input id="transferAmount" value="10" placeholder="Số DST"><button id="transfer">Chuyển DST</button></section>
+  <section><h2>Pool</h2><input id="amount" value="10" placeholder="Số DST"><button id="approve">Approve DST</button><button id="deposit">Deposit</button><button id="withdraw">Withdraw</button><button id="claim">Claim DRW</button></section>
+
+  <script src="/node_modules/ethers/dist/ethers.umd.min.js"></script>
+  <script>
+    const erc20Abi = ["function balanceOf(address) view returns (uint256)","function approve(address,uint256) returns (bool)","function transfer(address,uint256) returns (bool)"];
+    const poolAbi = ["function deposit(uint256)","function withdraw(uint256)","function claim()","function deposited(address) view returns (uint256)","function pendingReward(address) view returns (uint256)"];
+    let config, provider, signer, account, stake, reward, pool;
+    const status = (text) => document.querySelector("#status").textContent = text;
+    const amount = () => ethers.parseUnits(document.querySelector("#amount").value || "0", 18);
+    async function connect() {
+      if (!window.ethereum) throw new Error("Chưa cài MetaMask extension.");
+      config = await (await fetch("./deployment.json")).json();
+      if (!config.pool) throw new Error("Chạy npm run deploy:local trước.");
+      provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const network = await provider.getNetwork();
+      if (network.chainId !== 31337n) throw new Error("Hãy chuyển MetaMask sang Hardhat Local (chain ID 31337).");
+      signer = await provider.getSigner(); account = await signer.getAddress();
+      stake = new ethers.Contract(config.stakeToken, erc20Abi, signer);
+      reward = new ethers.Contract(config.rewardToken, erc20Abi, signer);
+      pool = new ethers.Contract(config.pool, poolAbi, signer);
+      await refresh();
+    }
+    async function refresh() {
+      if (!account) return status("Chưa kết nối.");
+      const [dst, drw, deposited, pending] = await Promise.all([stake.balanceOf(account), reward.balanceOf(account), pool.deposited(account), pool.pendingReward(account)]);
+      status(`Ví: ${account}\nDST: ${ethers.formatUnits(dst,18)}\nDRW: ${ethers.formatUnits(drw,18)}\nĐã deposit: ${ethers.formatUnits(deposited,18)}\nReward chờ claim: ${ethers.formatUnits(pending,18)}`);
+    }
+    async function send(action) { try { const tx = await action(); status(`Đã gửi: ${tx.hash}\nĐang chờ xác nhận...`); await tx.wait(); await refresh(); } catch (error) { status(error.shortMessage || error.message); } }
+    document.querySelector("#connect").onclick = () => connect().catch(e => status(e.message));
+    document.querySelector("#refresh").onclick = () => refresh().catch(e => status(e.message));
+    document.querySelector("#approve").onclick = () => send(() => stake.approve(config.pool, amount()));
+    document.querySelector("#deposit").onclick = () => send(() => pool.deposit(amount()));
+    document.querySelector("#withdraw").onclick = () => send(() => pool.withdraw(amount()));
+    document.querySelector("#claim").onclick = () => send(() => pool.claim());
+    document.querySelector("#transfer").onclick = () => send(() => stake.transfer(document.querySelector("#recipient").value, ethers.parseUnits(document.querySelector("#transferAmount").value || "0", 18)));
+  </script>
+</body>
+</html>
